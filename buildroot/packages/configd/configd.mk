@@ -1,20 +1,21 @@
 ################################################################################
 #
-# findhdr
+# configd
 #
 ################################################################################
 
-FINDHDR_VERSION = 0.1
-FINDHDR_SITE = package/find_hdr
-FINDHDR_SITE_METHOD = local
-FINDHDR_INSTALL_TARGET = YES
+CONFIGD_VERSION = 0.1
+CONFIGD_SITE = package/configd
+CONFIGD_SITE_METHOD = local
+CONFIGD_INSTALL_TARGET = YES
+CONFIGD_DEPENDENCIES = json-c
 
-define FINDHDR_BUILD_CMDS
+define CONFIGD_BUILD_CMDS
 $(MAKE) CC="$(TARGET_CC)" LD="$(TARGET_LD)" -C $(@D) all
 endef
 
-define FINDHDR_INSTALL_TARGET_CMDS
-$(INSTALL) -D -m 0755 $(@D)/find_hdr $(TARGET_DIR)/bin
+define CONFIGD_INSTALL_TARGET_CMDS
+$(INSTALL) -D -m 0755 $(@D)/configd $(TARGET_DIR)/bin
 endef
 
 $(eval $(generic-package))

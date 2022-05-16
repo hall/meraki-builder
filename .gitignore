@@ -7,3 +7,5 @@ nor/*.bin
 
 # ignore docker build directories
 docker/*/src
+
+output/

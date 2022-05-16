@@ -4,7 +4,7 @@
  	source "package/taskd/Config.in"
  	source "package/wine/Config.in"
  	source "package/xutil_util-macros/Config.in"
-+	source "package/findhdr/Config.in"
++	source "package/find_hdr/Config.in"
  endmenu
  
  menu "Networking applications"

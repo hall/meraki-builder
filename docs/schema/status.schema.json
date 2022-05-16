@@ -1,0 +1,84 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "postmerkos/status.schema.json",
+    "title": "status",
+    "description": "network switch status for the postmerkos firmware",
+    "type": "object",
+    "required": [
+        "ports"
+    ],
+    "properties": {
+        "date": {
+            "description": "timestamp of when the status was generated",
+            "type": "string"
+        },
+        "temp": {
+            "description": "temperature measurements",
+            "type": "object",
+            "properties": {
+                "system": {
+                    "description": "system temperature",
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "zone": {
+                                "description": "cpu thermal zone",
+                                "type": "number"
+                            },
+                            "temp": {
+                                "description": "temperature in millidegrees celsius",
+                                "type": "number"
+                            }
+                        }
+                    }
+                },
+                "poe": {
+                    "description": "poe temperature",
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "temp": {
+                                "description": "poe temperature in millidegrees celsius",
+                                "type": "number"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "ports": {
+            "description": "status for an individual port",
+            "type": "object",
+            "patternProperties": {
+                "^[0-9]*$": {
+                    "link": {
+                        "description": "",
+                        "type": "object",
+                        "properties": {
+                            "established": {
+                                "description": "is a link established on the port",
+                                "type": "boolean"
+                            },
+                            "speed": {
+                                "description": "negotiated port speed in MB",
+                                "type": "int"
+                            }
+                        }
+                    },
+                    "poe": {
+                        "description": "poe status",
+                        "type": "object",
+                        "properties": {
+                            "power": {
+                                "description": "power consuption in watts",
+                                "type": "number"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
