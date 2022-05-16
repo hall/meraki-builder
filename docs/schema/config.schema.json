@@ -1,0 +1,37 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "postmerkos/config.schema.json",
+    "title": "config",
+    "description": "network switch config for the postmerkos firmware",
+    "type": "object",
+    "required": [
+        "ports"
+    ],
+    "properties": {
+        "ports": {
+            "description": "config for an individual port",
+            "type": "object",
+            "patternProperties": {
+                "^[0-9]*$": {
+                    "enabled": {
+                        "type": "boolean"
+                    },
+                    "poe": {
+                        "description": "poe config",
+                        "type": "object",
+                        "properties": {
+                            "enabled": {
+                                "type": "boolean"
+                            },
+                            "mode": {
+                                "description": "IEEE PoE mode",
+                                "type": "string",
+                                "enum": ["802.6at", "802.6af"]
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

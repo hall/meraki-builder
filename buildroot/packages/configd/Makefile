@@ -1,9 +1,9 @@
 CC=gcc
 
 all: *.c
-	$(CC) -I$(PWD)/package/postmerkos -Os pd690xx.c -o pd690xx \
+	$(CC) -I$(PWD)/package/pd690xx -I$(PWD)/package/postmerkos -Os -o configd -ljson-c '$<' \
 	$(PWD)/package/pd690xx/libpd690xx.c \
 	$(PWD)/package/postmerkos/libpostmerkos.c
 clean:
-	rm -rf a.out pd690xx
+	rm -rf a.out cfg
 	rm -f *.o
