@@ -405,15 +405,11 @@ int port_priority(struct pd690xx_cfg *pd690xx, int port) {
     return port_prio;
 }
 
-int get_temp(struct pd690xx_cfg *pd690xx) {
+float get_temp(struct pd690xx_cfg *pd690xx, int index) {
     unsigned int res;
-    int pd690xx_count = pd690xx_pres_count(pd690xx);
-    for (int i=0; i<pd690xx_count; i++) {
-        int i2c_fd = pd690xx_fd(pd690xx, i*12);
-        i2c_read(i2c_fd, pd690xx->pd690xx_addrs[i], AVG_JCT_TEMP, &res);
-        printf("%.1f C\n", (((int)res-684)/-1.514)-40);
-    }
-    return 0;
+    int i2c_fd = pd690xx_fd(pd690xx, index*12);
+    i2c_read(i2c_fd, pd690xx->pd690xx_addrs[index], AVG_JCT_TEMP, &res);
+    return ((((int)res-684)/-1.514)-40);
 }
 
 int get_power(struct pd690xx_cfg *pd690xx, int port) {

@@ -175,9 +175,7 @@ BR2_TOOLCHAIN_BUILDROOT_LIBC="uclibc"
 # BR2_KERNEL_HEADERS_VERSION is not set
 BR2_KERNEL_HEADERS_CUSTOM_TARBALL=y
 # BR2_KERNEL_HEADERS_CUSTOM_GIT is not set
-#BR2_KERNEL_HEADERS_CUSTOM_TARBALL_LOCATION="http://172.17.0.1:8000/linux-3.18.123.tar.bz2"
-#BR2_KERNEL_HEADERS_CUSTOM_TARBALL_LOCATION="https://github.com/halmartin/MS42-GPL-sources-3-18-122/archive/refs/heads/master/linux-3.18.tar.gz"
-BR2_KERNEL_HEADERS_CUSTOM_TARBALL_LOCATION="https://cdn.kernel.org/pub/linux/kernel/v3.x/linux-3.18.123.tar.xz" 
+BR2_KERNEL_HEADERS_CUSTOM_TARBALL_LOCATION="https://cdn.kernel.org/pub/linux/kernel/v3.x/linux-3.18.123.tar.xz"
 # BR2_PACKAGE_HOST_LINUX_HEADERS_CUSTOM_5_10 is not set
 # BR2_PACKAGE_HOST_LINUX_HEADERS_CUSTOM_5_9 is not set
 # BR2_PACKAGE_HOST_LINUX_HEADERS_CUSTOM_5_8 is not set
@@ -2991,6 +2989,7 @@ BR2_PACKAGE_QEMU_ARCH_SUPPORTS_TARGET=y
 # taskd needs a toolchain w/ C++, wchar, dynamic library
 #
 # BR2_PACKAGE_XUTIL_UTIL_MACROS is not set
+# BR2_PACKAGE_FINDHDR is not set
 
 #
 # Networking applications

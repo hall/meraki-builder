@@ -5,11 +5,12 @@
 #define PORTS_FILE "/click/switch_port_table/dump_pports"
 #define VLANS_FILE "/click/switch_port_table/dump_pport_vlans"
 
-_Bool hasPoe();
-char *getTime();
-_Bool startsWith(const char *, const char *);
-_Bool endsWith(const char *, const char *);
+_Bool has_poe();
+char *get_time();
+char *get_name();
+_Bool starts_with(const char *, const char *);
+_Bool ends_with(const char *, const char *);
 char *itoa(int, char *, int);
-const char *getfield(char *, int);
+const char *get_field(char *, int);
 
 #endif // postmerkos

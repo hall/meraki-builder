@@ -8,26 +8,40 @@
 #include <time.h>
 
 
-// hasPoe returns true if the device is PoE-capable, false otherwise
-bool hasPoe() {
+// has_poe returns true if the device is PoE-capable, false otherwise
+bool has_poe() {
   // there's probably a better way to do this than guessing based on the device
   // name
-  bool has = false;
+  if (ends_with(get_name(), "P")) {
+    return true;
+  }
+
+  return false;
+}
+
+// get_name returns the device model name
+char *get_name() {
+  char *name = malloc(sizeof(50));
+  int found = 0;
 
   FILE *file = fopen(DEVICE_FILE, "r");
-  char line[100];
+  char line[50];
   if (fgets(line, sizeof(line), file)) {
-    if (startsWith(line, "MODEL=") && endsWith(line, "P\n")) {
-      has = true;
+    if (starts_with(line, "MODEL=")) {
+      // remove "MODEL=" prefix and "\n" suffix
+       strncpy(name, (char *) line + 6, strlen(line)-7);
+      found = 1;
     }
   }
 
   fclose(file);
-  return has;
+  if (found) {
+    return name;
+  }
 }
 
-// getTime returns the current time in ISO 8601 format
-char *getTime() {
+// get_time returns the current time in ISO 8601 format
+char *get_time() {
   time_t now = time(NULL);
   struct tm *time_info = localtime(&now);
   static char timeString[256];
@@ -36,8 +50,8 @@ char *getTime() {
 }
 
 
-// startsWith returns true if STR starts with PREFIX
-bool startsWith(const char *str, const char *prefix) {
+// starts_with returns true if STR starts with PREFIX
+bool starts_with(const char *str, const char *prefix) {
   if (!str || !prefix)
     return 0;
   size_t lenstr = strlen(str);
@@ -47,8 +61,8 @@ bool startsWith(const char *str, const char *prefix) {
   return strncmp(prefix, str, lenprefix) == 0;
 }
 
-// endsWith returns true-ish if STR ends with SUFFIX
-bool endsWith(const char *str, const char *suffix) {
+// ends_with returns true-ish if STR ends with SUFFIX
+bool ends_with(const char *str, const char *suffix) {
   if (!str || !suffix)
     return 0;
   size_t lenstr = strlen(str);
@@ -89,8 +103,8 @@ char *itoa(int num, char *buffer, int base) {
   return buffer;
 }
 
-// getfield gets field NUM from space-delimited LINE
-const char *getfield(char *line, int num) {
+// get_field gets field NUM from space-delimited LINE
+const char *get_field(char *line, int num) {
   const char *tok;
   char linecopy[256];
   strcpy(linecopy, line);

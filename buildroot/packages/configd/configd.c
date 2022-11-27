@@ -1,5 +1,6 @@
 #include "configd.h"
 #include <libpd690xx.h>
+#include <pd690xx_meraki.h>
 #include <libpostmerkos.h>
 
 #include <dirent.h>
@@ -13,11 +14,21 @@
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
+#include <libgen.h>
 // #include <sys/inotify.h>
 
+struct pd690xx_cfg pd690xx = {
+    // i2c_fds
+    {-1, -1},
+    // pd690xx_addrs
+    {PD690XX0_I2C_ADDR, PD690XX1_I2C_ADDR, PD690XX2_I2C_ADDR, PD690XX3_I2C_ADDR},
+    // pd690xx_pres
+    {0, 0, 0 ,0}
+};
+
 // read config from click filesystem
-struct json_object *read_config() {
-  bool poeCapable = hasPoe();
+struct json_object* read_config(struct pd690xx_cfg *pd690xx) {
+  bool poeCapable = has_poe();
 
   struct json_object *jobj = json_object_new_object();
 
@@ -59,9 +70,9 @@ struct json_object *read_config() {
       struct json_object *jportpoe = json_object_new_object();
       json_object_object_add(jport, "poe", jportpoe);
       json_object_object_add(jportpoe, "enabled",
-                             json_object_new_boolean(port_state(p)));
-      json_object_object_add(jportpoe, "mode",
-                             json_object_new_string(port_type_str(p)));
+                             json_object_new_boolean(port_state(pd690xx, p)));
+      // json_object_object_add(jportpoe, "mode",
+                            //  json_object_new_string(port_type_str(*pd690xx, p)));
     }
 
     // populate array of values from the current line
@@ -87,7 +98,7 @@ struct json_object *read_config() {
 }
 
 // write config to click filesystem
-int write_config(struct json_object *json) {
+int write_config(struct pd690xx_cfg *pd690xx, struct json_object *json) {
 
   // get all top-level keys
   json_object_object_foreach(json, key, value) {
@@ -106,11 +117,11 @@ int write_config(struct json_object *json) {
             json_object_object_foreach(itemconfig, poeitem, poeitemconfig) {
 
               if (strcmp(poeitem, "enabled") == 0) {
-                printf("poe state is %d for port %s\n", port_state(atoi(port)),
+                printf("poe state is %d for port %s\n", port_state(pd690xx, atoi(port)),
                        port);
-                if (poeitemconfig && !port_state(atoi(port))) {
+                if (poeitemconfig && !port_state(pd690xx, atoi(port))) {
                   printf("poe enabled for port %s\n", port);
-                } else if (!poeitemconfig && port_state(atoi(port))) {
+                } else if (!poeitemconfig && port_state(pd690xx, atoi(port))) {
                   printf("poe disabled for port %s\n", port);
                 }
               }
@@ -122,12 +133,104 @@ int write_config(struct json_object *json) {
   }
 }
 
+void read_status(struct pd690xx_cfg *pd690xx) {
+  bool poeCapable = has_poe();
+
+  struct json_object *jobj = json_object_new_object();
+  json_object_object_add(jobj, "date", json_object_new_string(get_time()));
+  json_object_object_add(jobj, "device", json_object_new_string(get_name()));
+
+  struct json_object *jtemp = json_object_new_object();
+  json_object_object_add(jobj, "temperature", jtemp);
+
+  struct json_object *jtempsys = json_object_new_array();
+  json_object_object_add(jtemp, "cpu", jtempsys);
+
+  struct dirent *dp;
+  DIR *dfd;
+  char *dir = "/sys/class/thermal";
+  if ((dfd = opendir(dir)) == NULL) {
+    fprintf(stderr, "Can't open %s\n", dir);
+    exit(1);
+  }
+
+  char filename[100];
+  while ((dp = readdir(dfd)) != NULL) {
+    struct stat stbuf;
+    sprintf(filename, "%s/%s", dir, dp->d_name);
+    if (stat(filename, &stbuf) == -1) {
+      printf("Unable to stat file: %s\n", filename);
+      continue;
+    }
+
+    if (!starts_with(filename + strlen(dir) + 1, "thermal_")) {
+      continue;
+    }
+    strcat(filename, "/temp");
+    FILE *file = fopen(filename, "r");
+
+    static char line[100];
+    fgets(line, sizeof(line), file);
+    // remove trailing newline
+    line[strcspn(line, "\n")] = 0;
+    json_object_array_add(jtempsys, json_object_new_double(atoi(line) / 1000.0));
+    fclose(file);
+  }
+
+  if (poeCapable) {
+    struct json_object *jtemppoe = json_object_new_array();
+    json_object_object_add(jtemp, "poe", jtemppoe);
+    for (int i = 0; i < 4; i++) {
+      json_object_array_add(jtemppoe, json_object_new_double(get_temp(pd690xx, i)));
+    }
+  }
+
+  struct json_object *jports = json_object_new_object();
+  json_object_object_add(jobj, "ports", jports);
+
+  FILE *file = fopen(PORTS_FILE, "r");
+  char line[256];
+
+  int p = -1;
+  char buffer[256];
+  while (fgets(line, sizeof(line), file)) {
+    p++;
+    if (p == 0) {
+      // skip file header
+      continue;
+    }
+
+    struct json_object *jport = json_object_new_object();
+    json_object_object_add(jports, itoa(p, buffer, 10), jport);
+
+    struct json_object *jportlink = json_object_new_object();
+    json_object_object_add(jport, "link", jportlink);
+
+    json_object_object_add(jportlink, "established",
+                           json_object_new_boolean(atoi(get_field(line, 2))));
+    json_object_object_add(jportlink, "speed",
+                           json_object_new_int(atoi(get_field(line, 3))));
+
+    if (poeCapable) {
+      struct json_object *jportpoe = json_object_new_object();
+      json_object_object_add(jport, "poe", jportpoe);
+      json_object_object_add(jportpoe, "power",
+                             json_object_new_int(port_power(pd690xx, p)));
+    }
+  }
+
+  fclose(file);
+  printf("%s", json_object_to_json_string_ext(
+                   jobj, JSON_C_TO_STRING_SPACED | JSON_C_TO_STRING_PRETTY));
+  json_object_put(jobj); // Delete the json object
+}
+
 // poll config file for changes
-void poll() {
+void poll(struct pd690xx_cfg *pd690xx) {
   time_t mtime;
   time(&mtime);
   struct stat st;
-  struct json_object *current = read_config();
+  struct json_object *current = read_config(pd690xx);
   struct json_object *modified;
 
   int file = open(CONFIG_FILE, O_RDONLY);
@@ -151,7 +254,7 @@ void poll() {
       if (!json_object_equal(current, modified)) {
         current = modified;
         // printf("object changed\n");
-        write_config(modified);
+        write_config(pd690xx, modified);
       }
     }
 
@@ -159,14 +262,14 @@ void poll() {
   }
 }
 
-int main(int argc, char **argv) {
+void run_daemon(struct pd690xx_cfg *pd690xx) {
 
   // create config file if it doesn't exist
   if (access(CONFIG_FILE, F_OK) != 0) {
     printf("config file (%s) does not exist, creating\n", CONFIG_FILE);
     FILE *file = fopen(CONFIG_FILE, "w");
     const char *json = json_object_to_json_string_ext(
-        read_config(), JSON_C_TO_STRING_SPACED | JSON_C_TO_STRING_PRETTY);
+        read_config(pd690xx), JSON_C_TO_STRING_SPACED | JSON_C_TO_STRING_PRETTY);
     fprintf(file, json);
     fclose(file);
     printf("config file created\n");
@@ -175,5 +278,36 @@ int main(int argc, char **argv) {
   // inotify is not currently enabled and returns the following error:
   //   inotify_init: Function not implemented
   // so lets poll for now
-  poll();
+  poll(pd690xx);
+
+}
+
+void usage(char **argv) {
+    printf("Usage: %s [OPTIONS]\n", basename(argv[0]));
+    printf("\tRead switch status or get/set config to/from `/etc/switch.json`\n");
+    printf("Options:\n");
+    printf("\t-d\tWatch for config changes in daemon mode\n");
+    printf("\t-g\tGet switch status (default)\n");
+    printf("\t-h\tProgram usage\n");
+}
+
+int main(int argc, char **argv) {
+  i2c_init(&pd690xx);
+    int c;
+
+    while ((c = getopt (argc, argv, "hdg::")) != -1) {
+      switch(c) {
+        case 'd':
+          run_daemon(&pd690xx);
+          break;
+        case 'h':
+        case '?':
+          usage(argv);
+          break;
+        default:
+        case 'g':
+          read_status(&pd690xx);
+          break;
+      }
+    }
 }

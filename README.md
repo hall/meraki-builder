@@ -53,3 +53,7 @@ After building the toolchain + target filesystem with `make`, copy `output/image
 To build a specific package,
 
     make <package>-rebuild
+
+The compiled binary will be at `./output/build/<name>-<version>/<name>` on the host.
+
+> **NOTE**: `sftp-server` does not exist so `scp` requires the `-O` option

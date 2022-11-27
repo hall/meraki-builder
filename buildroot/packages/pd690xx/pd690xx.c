@@ -193,7 +193,10 @@ int main (int argc, char **argv) {
         get_voltage(&pd690xx);
     }
     if (temp) {
-        get_temp(&pd690xx);
+        int pd690xx_count = pd690xx_pres_count(pd690xx);
+        for (int i=0; i<pd690xx_count; i++) {
+            printf("%.1f C\n", get_temp(&pd690xx, i));
+        }
     }
 
     i2c_close(&pd690xx);
