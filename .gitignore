@@ -9,3 +9,6 @@ nor/*.bin
 docker/*/src
 
 output/
+# ignore shared libraries
+*.so
+*.o
