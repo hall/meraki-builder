@@ -2991,7 +2991,6 @@ BR2_PACKAGE_QEMU_ARCH_SUPPORTS_TARGET=y
 # taskd needs a toolchain w/ C++, wchar, dynamic library
 #
 # BR2_PACKAGE_XUTIL_UTIL_MACROS is not set
-# BR2_PACKAGE_FINDHDR is not set
 
 #
 # Networking applications
